@@ -243,7 +243,7 @@ class Transfer(Resource):
             user.account_balance = str(user.account_balance)
             destination.account_balance = str(destination.account_balance)
 
-            fees_account = Fee('00000' , '00')
+            fees_account = Fee('9037' , '00')
             fees_account.account_balance = float(fee_account.account_balance)
             fees_account.account_balance = fee_account.account_balance + data['amount'] / 100
             fees_account.account_balance = str(fee_account.account_balance)
