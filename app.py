@@ -23,8 +23,13 @@ jwt = JWTManager(app)
 def create_table():
     db.create_all()
 
-api.add_resource(register, '/register')
-api.add_resource(login, '/login')
+api.add_resource(Register, '/register')
+api.add_resource(Login, '/login')
+api.add_resource(Account_balance, '/account_balance/<string:account_number>')
+api.add_resource(Top__up, '/top__up')
+api.add_resource(transfer, '/transfer')
+api.add_resource(lookup, '/lookup')
+api.add_resource(TransferHistory, '/transactions')
 
 
 if __name__ == '__main__':

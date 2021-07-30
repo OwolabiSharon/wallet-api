@@ -1,6 +1,7 @@
 import random
 from db import db
 from models.user import *
+from flask import jsonify
 from flask_restful import Resource, reqparse, inputs
 from flask_jwt_extended import create_access_token,jwt_required
 
@@ -8,14 +9,17 @@ from flask_jwt_extended import create_access_token,jwt_required
 # all endpoint responses are to be called from a function or from a dictionary key value pair thingy
 #ill do it later😁
 
-def plausibleAccNo():
-    number = random.sample(range(999999999), 1)
+def returnfunc(status,data,message):
+    return {
+        'status': status,
+        'data': data,
+        'message': message
+    }
 
 
 
 class Register(Resource):
     parser = reqparse.RequestParser()
-
 
     parser.add_argument(
         'first_name',
@@ -69,10 +73,9 @@ class Register(Resource):
         #    return sha_signature
 
         if User.find_by_email(data['email']):
-            return {
-                'status':False,
-                'message':'user exists'
-            },400
+            response = returnfunc(False,None,'user exists allready')
+            return response,400
+
         list=random.sample(range(1000000000000), 1)
         number = random.choice(list)
         user = User(
@@ -89,11 +92,9 @@ class Register(Resource):
         #user.password = register.encrypt_string(user.password)
         #user.pin = register.encrypt_string(user.pin)
         User.save_to_db(user)
-        return {
-            'status': True,
-            'data':user.json(),
-            'message':'user created succesfully'
-        },201
+        response = returnfunc(True,user.json(),'user created succesfully')
+        return response,200
+
 
 
 class Login(Resource):
@@ -116,15 +117,11 @@ class Login(Resource):
 
         if user:
             access_token = create_access_token(identity=user.id,fresh =True)
-            return {
-            'status': True,
-            'data': access_token,
-            'message':'you are logged in'
-                   },200
-        return {
-            'status':False,
-            'message':'user not found'
-                },404
+            response = returnfunc(True,access_token,'you are logged in')
+            return response,200
+        response = returnfunc(False,None,'user not found')
+        return response,404
+
 
 
 
@@ -135,16 +132,12 @@ class Account_balance(Resource):
         balance = user.account_balance
         #user =user.phone_number[x.json() for x in Received_Transfer.query.all()]
         if user:
-            return {
-                'status':True,
-                'data': balance,
-                'message':'this is your account balance'
-                        }
+            response = returnfunc(True,balance,'this is your account_number')
+            return response,200
 
-        return {
-            'status':True,
-            'user': 'does not exist'
-                },404
+        response = returnfunc(False,None,'user not found')
+        return response,404
+
 
 
 class Top__up(Resource):
@@ -163,29 +156,57 @@ class Top__up(Resource):
         )
 
     @jwt_required()
-    def put(self):
+    def post(self):
         data = Top__up.parser.parse_args()
         user = User.find_by_account_number(data['account_number'])
         #user.money_in_the_bag = float(user.money_in_the_bag)
         if user:
+            settlement = Settlement_to.find_by_account_number(235522)
+            if settlement:
+                print ("")
+            else:
+                settlement = Settlement_to("235522","9999999999999")
+
             user.account_balance = float(user.account_balance)
-            user.account_balance = data['ammount'] + user.account_balance
+            print (settlement.account_number)
+            settlement.account_balance = float(settlement.account_balance)
+            settlement.account_balance = settlement.account_balance - data['amount']
+            user.account_balance = data['amount'] + user.account_balance
             user.account_balance =str(user.account_balance)
+            settlement.account_balance =str(settlement.account_balance)
 
-            User.save_to_db(user)
-            json = user.account_balance
-            return{
-            'status':True,
-            'data': json,
-            'message':'your ubeus account has been credited'
-                        },200
-        return{
-        'status': False,
-        'message':'user does not exist'
-                },404
+            list=random.sample(range(9999999), 1)
+            number = random.choice(list)
+
+            transaction = Transaction(
+                        number,
+                        "money added to users account from settlement",
+                        "credit",
+                        "account top up",
+                        "pending",
+                        data['account_number'],
+                        "235522",
+                        data['amount']
+                            )
+            try:
+                User.save_to_db(user)
+                transaction.transaction_status = "succesful"
+                Transaction.save_to_db(transaction)
+            except:
+                transaction.transaction_status = "Failed"
+                Transaction.save_to_db(transaction)
 
 
-class Transfer(Resource):
+
+            balance = {'transaction_id': transaction.id , 'account_balance': user.account_balance}
+            response = returnfunc(True,balance,'your ubeus account has been credited')
+            return response,200
+        response = returnfunc(False,None,'user not found')
+        return response,404
+
+
+
+class transfer(Resource):
     parser = reqparse.RequestParser()
     parser.add_argument(
         'account_number',
@@ -227,7 +248,7 @@ class Transfer(Resource):
     @jwt_required()
     def post(self):
 
-        data = Transfer.parser.parse_args()
+        data = transfer.parser.parse_args()
         user = User.find_by_account_number(data['account_number'])
         destination = User.find_by_account_number(data['destination_account'])
 
@@ -236,41 +257,92 @@ class Transfer(Resource):
             destination.account_balance = float(destination.account_balance)
 
             if user.account_balance < data['amount']:
-                return {'message':'your account balance is less than required amount'}
+                response = returnfunc(False,None,'your account balance is less than required amount')
+                return response,404
 
             destination.account_balance = data['amount'] + destination.account_balance
             user.account_balance = user.account_balance - data['amount']
             user.account_balance = str(user.account_balance)
             destination.account_balance = str(destination.account_balance)
 
-            fees_account = Fee('9037' , '00')
-            fees_account.account_balance = float(fee_account.account_balance)
-            fees_account.account_balance = fee_account.account_balance + data['amount'] / 100
-            fees_account.account_balance = str(fee_account.account_balance)
+            fees_account = Fee.find_by_account_number("9037")
+            fees_account.account_balance = float(fees_account.account_balance)
+            fees_account.account_balance = fees_account.account_balance + data['amount'] / 100
+            fees_account.account_balance = str(fees_account.account_balance)
 
-            transaction = Transfer(
+            list=random.sample(range(9999999), 1)
+            number = random.choice(list)
+            transaction = Transaction(
+                        number,
                         data['description'],
                         "credit",
                         data['transaction_type'],
                         "pending",
                         data['destination_account'],
-                        data['source_account'],
+                        data['account_number'],
                         data['amount']
                             )
+            print (fees_account.account_balance)
+            account = {'transaction_id': transaction.id , 'account_balance': user.account_balance}
+            try:
+                User.save_to_db(user)
+                User.save_to_db(destination)
+                Fee.save_to_db(fees_account)
+                transaction.transaction_status = "succesful"
+                Transaction.save_to_db(transaction)
+            except:
+                transaction.transaction_status = "Failed"
+                Transaction.save_to_db(transaction)
 
-            Transaction.save_to_db(transaction)
-            User.save_to_db(user)
-            User.save_to_db(destination)
-            Fee.save_to_db(fees_account)
+            response = returnfunc(True,account,'you have succesfully made your transfer')
+            return response,200
+        response = returnfunc(False,None,'either your account or the destination account doesnt exist')
+        return response,404
 
-            account = user.account_balance
-            return {
-                'status':True,
-                'data': account,
-                'message':'you have succesfully made your transfer'
-                   }
-        return {
-            'status':False,
-            'data': "",
-            'message':'either your account or the destination account doesnt exist'
-               }
+
+
+class lookup(Resource):
+    parser = reqparse.RequestParser()
+    parser.add_argument(
+            'transaction_id',
+            type=int,
+            required=True,
+            help="This field cannot be left blank!"
+                        )
+    @jwt_required()
+    def post(self):
+        data = lookup.parser.parse_args()
+        transaction = Transaction.find_by_id(data['transaction_id'])
+        if transaction:
+            response = returnfunc(True,transaction.json(),'this is your transaction info')
+            return response,200
+        response = returnfunc(False,None,'transaction was never made')
+        return response,404
+
+
+
+class TransferHistory(Resource):
+    parser = reqparse.RequestParser()
+
+    parser.add_argument(
+        'account_number',
+        type=str,
+        required=True,
+        help="This field cannot be left blank!"
+                    )
+
+    @jwt_required()
+    def post(self):
+        data = TransferHistory.parser.parse_args()
+        user = User.find_by_account_number(data['account_number'])
+
+        if user:
+            response = returnfunc(
+                        True,
+                        list(map(lambda x: x.json(), Transaction.query.filter_by(source_account=user.account_number).all() + Transaction.query.filter_by(destination_account=user.account_number).all())),
+                        'these are all transactions made by this user'
+                        )
+            return response,200
+
+        response = returnfunc(False,None,'user was not found')
+        return response,404

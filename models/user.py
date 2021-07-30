@@ -66,11 +66,15 @@ class User(db.Model):
     def find_by_username(cls, username):
         return cls.query.filter_by(username=username).first()
 
+    @classmethod
+    def find_by_account_number(cls, account_number):
+        return cls.query.filter_by(account_number=account_number).first()
+
 
 class Transaction(db.Model):
     __TableName__ = 'transactions'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True,nullable=False)
     description = db.Column(db.String(900))
     transaction_direction = db.Column(db.String(900))
     transaction_type = db.Column(db.String(800))
@@ -80,8 +84,9 @@ class Transaction(db.Model):
     amount = db.Column(db.String(800))
 
 
-    def __init__(self,description,transaction_direction,transaction_type,transaction_status,destination_account,source_account,amount,user_id):
+    def __init__(self,id,description,transaction_direction,transaction_type,transaction_status,destination_account,source_account,amount):
 
+        self.id = id
         self.description = description
         self.transaction_direction = transaction_direction
         self.transaction_type = transaction_type
@@ -100,6 +105,7 @@ class Transaction(db.Model):
 
     def json(self):
         return {
+            'transaction_id': self.id,
             'description':self.description,
             'transaction_direction':self.transaction_direction,
             'transaction_type':self.transaction_type,
@@ -108,6 +114,10 @@ class Transaction(db.Model):
             'source_account':self.source_account,
             'amount':self.amount
         }
+
+    @classmethod
+    def find_by_id(cls, id):
+        return cls.query.filter_by(id=id).first()
 
 
 
@@ -121,8 +131,8 @@ class Settlement_to(db.Model):
 
 
     def __init__(self, account_number,account_balance):
-        self.account_number = account_number
-        self.account_balance = 9999999999999
+        self.account_number = "235522"
+        self.account_balance = "9999999999999"
 
 
     def save_to_db(self):
@@ -134,39 +144,12 @@ class Settlement_to(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_password(cls, password):
-        return cls.query.filter_by(password=password).first()
+    def find_by_account_number(cls, account_number):
+        return cls.query.filter_by(account_number=account_number).first()
 
 
 class Settlement_fro(db.Model):
     __tablename__ = 'settlement_fro'
-
-    id = db.Column(db.Integer, primary_key=True)
-    account_number = db.Column(db.String(11))
-    account_balance = db.Column(db.String(800))
-
-
-
-    def __init__(self, account_number,account_balance):
-        self.account_number = account_number
-        self.account_balance = 0000000000000
-
-
-    def save_to_db(self):
-        db.session.add(self)
-        db.session.commit()
-
-    def delete_from_db(self):
-        db.session.delete(self)
-        db.session.commit()
-
-    @classmethod
-    def find_by_password(cls, password):
-        return cls.query.filter_by(password=password).first()
-
-
-class Fee(db.Model):
-    __tablename__ = 'fees'
 
     id = db.Column(db.Integer, primary_key=True)
     account_number = db.Column(db.String(11))
@@ -188,5 +171,32 @@ class Fee(db.Model):
         db.session.commit()
 
     @classmethod
-    def find_by_password(cls, password):
-        return cls.query.filter_by(password=password).first()
+    def find_by_account_number(cls, account_number):
+        return cls.query.filter_by(account_number=account_number).first()
+
+
+class Fee(db.Model):
+    __tablename__ = 'fees'
+
+    id = db.Column(db.Integer, primary_key=True)
+    account_number = db.Column(db.String(11))
+    account_balance = db.Column(db.String(800))
+
+
+
+    def __init__(self, account_number,account_balance):
+        self.account_number = "9037"
+        self.account_balance = "00"
+
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete_from_db(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @classmethod
+    def find_by_account_number(cls, account_number):
+        return cls.query.filter_by(account_number=account_number).first()
