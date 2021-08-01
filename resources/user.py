@@ -278,7 +278,6 @@ class transfer(Resource):
                         data['account_number'],
                         data['amount']
                             )
-            print (fees_account.account_balance)
             account = {'transaction_id': transaction.id , 'account_balance': user.account_balance}
             try:
                 User.save_to_db(user)
