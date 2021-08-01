@@ -264,11 +264,7 @@ class transfer(Resource):
             user.account_balance = user.account_balance - data['amount']
             user.account_balance = str(user.account_balance)
             destination.account_balance = str(destination.account_balance)
-
-            fees_account = Fee.find_by_account_number("9037")
-            fees_account.account_balance = float(fees_account.account_balance)
-            fees_account.account_balance = fees_account.account_balance + data['amount'] / 100
-            fees_account.account_balance = str(fees_account.account_balance)
+            
 
             list=random.sample(range(9999999), 1)
             number = random.choice(list)
